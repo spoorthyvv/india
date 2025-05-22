@@ -1,25 +1,12 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import requests
 import json
 from streamlit_plotly_events import plotly_events
 
-# Configure Streamlit page
 st.set_page_config(page_title="Interactive India Map", layout="wide")
-
-# Title and instructions
 st.title("🇮🇳 Interactive India Map (Click a State)")
-st.markdown("""
-This is an interactive map of India.  
-Click on any state to:
-- Highlight it in **red**
-- Automatically **redirect** to a URL (placeholder)
 
-You can replace these URLs with your actual site links.
-""")
-
-# Load GeoJSON from GitHub (state boundaries)
 @st.cache_data
 def load_geojson():
     with open("india_state.geojson", "r", encoding="utf-8") as f:
@@ -27,22 +14,16 @@ def load_geojson():
 
 geojson = load_geojson()
 
-# Get list of states from the GeoJSON
+# Extract state names
 state_names = [feature["properties"]["NAME_1"] for feature in geojson["features"]]
 
-# Create DataFrame to match Plotly's expectations
+# Dummy values for coloring
 df = pd.DataFrame({
     "state": state_names,
-    "value": [1] * len(state_names)  # dummy value for coloring
+    "value": [1] * len(state_names),
 })
 
-# Mapping from state names to placeholder URLs (you can replace these)
-state_links = {
-    state: f"https://yourdomain.com/{state.replace(' ', '_').lower()}"
-    for state in state_names
-}
-
-# Create Plotly choropleth map
+# Create choropleth figure
 fig = px.choropleth(
     df,
     geojson=geojson,
@@ -50,34 +31,29 @@ fig = px.choropleth(
     featureidkey="properties.NAME_1",
     color="value",
     color_continuous_scale=[[0, "white"], [1, "red"]],
-    scope="asia",
-    title="Click a State to Redirect"
 )
 
-# Remove axes and color bar
 fig.update_geos(fitbounds="locations", visible=False)
-fig.update_layout(
-    margin={"r": 0, "t": 30, "l": 0, "b": 0},
-    coloraxis_showscale=False
-)
+fig.update_layout(margin={"r":0, "t":30, "l":0, "b":0}, coloraxis_showscale=False, title_text="Click on a state to redirect")
 
-# Display map and listen for clicks
-selected_points = plotly_events(fig, click_event=True, hover_event=False)
-st.plotly_chart(fig, use_container_width=True)
+# Show the interactive map and get click events
+selected_points = plotly_events(fig, click_event=True)
 
-# Show clicked state and redirect
 if selected_points:
-    clicked_state = selected_points[0]["location"]
+    clicked_state = selected_points[0].get("location")
     if clicked_state:
         st.success(f"You clicked on: {clicked_state}")
-        target_url = state_links.get(clicked_state)
+        target_url = f"https://spoorthyvv.github.io/"
+        st.markdown(f"Redirecting to: [{target_url}]({target_url})")
 
-        if target_url:
-            st.markdown(f"Redirecting to: [{target_url}]({target_url})")
-            # Trigger JavaScript redirect
-            st.components.v1.html(f"""
-                <meta http-equiv="refresh" content="1; URL={target_url}">
-                <script>window.location.href = "{target_url}";</script>
-            """, height=0)
-        else:
-            st.warning("No URL defined for this state.")
+        # HTML to redirect after 1 second
+        redirect_html = f"""
+            <meta http-equiv="refresh" content="1; URL={target_url}">
+            <script>
+                setTimeout(function() {{
+                    window.location.href = "{target_url}";
+                }}, 1000);
+            </script>
+        """
+        st.components.v1.html(redirect_html, height=0)
+
