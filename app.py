@@ -5,7 +5,8 @@ import json
 from streamlit_plotly_events import plotly_events
 
 st.set_page_config(page_title="Interactive India Map", layout="wide")
-st.title("🇮🇳 Interactive India Map (Click a State)")
+
+st.title("🇮🇳 Interactive India Map - Click a State")
 
 @st.cache_data
 def load_geojson():
@@ -17,13 +18,13 @@ geojson = load_geojson()
 # Extract state names
 state_names = [feature["properties"]["NAME_1"] for feature in geojson["features"]]
 
-# Dummy values for coloring
+# Create dummy data for coloring
 df = pd.DataFrame({
     "state": state_names,
-    "value": [1] * len(state_names),
+    "value": [1] * len(state_names)  # uniform dummy value
 })
 
-# Create choropleth figure
+# Create the choropleth map
 fig = px.choropleth(
     df,
     geojson=geojson,
@@ -31,29 +32,46 @@ fig = px.choropleth(
     featureidkey="properties.NAME_1",
     color="value",
     color_continuous_scale=[[0, "white"], [1, "red"]],
+    hover_name="state",
+    scope="asia",
 )
 
-fig.update_geos(fitbounds="locations", visible=False)
-fig.update_layout(margin={"r":0, "t":30, "l":0, "b":0}, coloraxis_showscale=False, title_text="Click on a state to redirect")
+# Style the map: remove axes, add red borders, hover effect
+fig.update_geos(
+    fitbounds="locations",
+    visible=False,
+)
 
-# Show the interactive map and get click events
-selected_points = plotly_events(fig, click_event=True)
+# Red border around states
+fig.update_traces(marker_line_width=1, marker_line_color="red")
 
+# Remove colorbar
+fig.update_layout(
+    margin={"r":0,"t":30,"l":0,"b":0},
+    coloraxis_showscale=False,
+    title_text="Click a State to Redirect to spoorthyvv.github.io",
+)
+
+# Display map and listen for click events
+selected_points = plotly_events(fig, click_event=True, hover_event=False)
+
+st.plotly_chart(fig, use_container_width=True)
+
+# Redirect on click
 if selected_points:
     clicked_state = selected_points[0].get("location")
     if clicked_state:
-        st.success(f"You clicked on: {clicked_state}")
-        target_url = f"https://spoorthyvv.github.io/"
-        st.markdown(f"Redirecting to: [{target_url}]({target_url})")
+        st.success(f"You clicked: {clicked_state}")
+        # Redirect to fixed URL on click
+        redirect_url = "https://spoorthyvv.github.io/"
+        st.markdown(f"Redirecting to [spoorthyvv.github.io]({redirect_url}) ...")
 
-        # HTML to redirect after 1 second
-        redirect_html = f"""
-            <meta http-equiv="refresh" content="1; URL={target_url}">
+        # Use JS redirect embedded in Streamlit
+        st.components.v1.html(f"""
             <script>
-                setTimeout(function() {{
-                    window.location.href = "{target_url}";
-                }}, 1000);
+            setTimeout(() => {{
+                window.location.href = "{redirect_url}";
+            }}, 1000);
             </script>
-        """
-        st.components.v1.html(redirect_html, height=0)
+        """, height=0)
 
