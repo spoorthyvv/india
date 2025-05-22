@@ -21,9 +21,8 @@ You can replace these URLs with your actual site links.
 # Load GeoJSON from GitHub (state boundaries)
 @st.cache_data
 def load_geojson():
-    url = "https://raw.githubusercontent.com/geohacker/india/master/state/india_states.geojson"
-    response = requests.get(url)
-    return response.json()
+    with open("india_state.geojson", "r", encoding="utf-8") as f:
+        return json.load(f)
 
 geojson = load_geojson()
 
