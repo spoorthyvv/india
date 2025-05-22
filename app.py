@@ -28,7 +28,7 @@ def load_geojson():
 geojson = load_geojson()
 
 # Get list of states from the GeoJSON
-state_names = [feature["properties"]["st_nm"] for feature in geojson["features"]]
+state_names = [feature["properties"]["NAME_1"] for feature in geojson["features"]]
 
 # Create DataFrame to match Plotly's expectations
 df = pd.DataFrame({
@@ -47,7 +47,7 @@ fig = px.choropleth(
     df,
     geojson=geojson,
     locations="state",
-    featureidkey="properties.st_nm",
+    featureidkey="properties.NAME_1",
     color="value",
     color_continuous_scale=[[0, "white"], [1, "red"]],
     scope="asia",
