@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import requests
+import json
 from streamlit_plotly_events import plotly_events
 
 # Configure Streamlit page
